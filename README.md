@@ -11,7 +11,8 @@ sandy uses the configuration file creted by awscli  e.g.
 
 #running
 
-python snap/snapy1.py <command> <--project=PROJECT>
+python snap/snapy1.py <command> <subcommand> <--project=PROJECT>
 
-*command* is list,start,stop
+*command* is instances, volume, snapshots
+*subcommand* is list, start, stop (depends on commands)
 *Project* is optional

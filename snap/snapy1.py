@@ -13,11 +13,71 @@ def filter_instances(project):
     else:
         instances=ec2.instances.all()
     return instances
-
-
 @click.group()
+def cli():
+    "sandy manages snapshots"
+
+@cli.group('snapshots')
+def snapshots():
+    "commands for volumes"
+
+@snapshots.command('list')
+@click.option('--project',default=None)
+def list_snapshots(project):
+    "list ec2 snapshots"
+    instances=filter_instances(project)
+
+    for i in instances:
+        for v in i.volumes.all():
+            for s in v.snapshots.all():
+                print("  ".join((
+                i.id,
+                v.id,
+                s.id,
+                s.state,
+                s.progress,
+                s.start_time.strftime("%c")
+                )))
+    return
+
+
+@cli.group('volumes')
+def volumes():
+    "commands for volumes"
+
+@volumes.command('list')
+@click.option('--project',default=None)
+def list_volumes(project):
+    "list ec2 volumes"
+    instances=filter_instances(project)
+    for i in instances:
+        for v in i.volumes.all():
+            print("  ".join((
+            i.id,
+            v.id,
+            v.state,
+            str(v.size) + "GiB",
+            v.encrypted and "Encrypted" or "Non Encrypted"
+            )))
+    return
+
+
+@cli.group('instances')
 def instances():
     """Commands for instances"""
+
+@instances.command('snapshots',help='create snapshots of all volumes')
+@click.option('--project',default=None)
+def create_snapshots(project):
+    "create snapshots for ec2 instances"
+    instances=filter_instances(project)
+
+    for i in instances:
+        i.stop()
+        for v in i.volumes.all():
+            print("creating snapshots of {0}".format(v.id))
+            v.create_snapshot(Description="Created by snapshot analyzer 001")
+    return
 
 @instances.command('list')
 @click.option('--project',default=None)
@@ -34,6 +94,8 @@ def list_instances(project):
             i.public_dns_name,
             tags.get('Project','<no projecct>')
             )))
+    return
+
 
 @instances.command('start')
 @click.option('--project',default=None,help='only instances for project')
@@ -58,4 +120,4 @@ def stop_instances(project):
     return
 
 if __name__ == '__main__':
-    instances()
+    cli()
